@@ -28,7 +28,7 @@ class AuthController extends Controller {
             $user->email = $request->input('email');
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
-
+            
             $user->save();
             
             return response()->json(['user' => $user, 'message' => 'CREATED'], 201);

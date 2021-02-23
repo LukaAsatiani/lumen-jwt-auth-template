@@ -3,11 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
+use App\Mail\RegistrationConfirmation;
+use Illuminate\Support\Facades\Mail;
 use App\Models\User;
+use App\Http\Controllers\MailController;
 
 class UserController extends Controller{
     public function __construct(){
-        $this->middleware('auth');
+        $this->middleware('auth', ['except' =>
+            [
+                'sendMail'
+            ]
+        ]);
     }
 
     public function profile(){
@@ -25,5 +32,9 @@ class UserController extends Controller{
         } catch (\Exception $e) {
             return response()->json(['message' => 'user not found!'], 404);
         }
+    }
+
+    public function sendMail(){
+        MailController::sendEmail('REGISTRATION_CONFORMATION', ['email'=>'limitpoint73@gmail.com', 'name'=>'drinkoron']);
     }
 }
