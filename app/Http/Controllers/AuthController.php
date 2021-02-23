@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Jobs\SendMailJob;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
+use App\Http\Controllers\EmailConfirmationController;
+use App\Http\Controllers\UserController;
 
-class AuthController extends Controller {
-    
+class AuthController extends Controller implements ShouldQueue{
     protected $jwt;
 
     public function __construct(JWTAuth $jwt){
@@ -30,6 +35,16 @@ class AuthController extends Controller {
             $user->password = app('hash')->make($plainPassword);
             
             $user->save();
+
+            $uri = Str::random(21);
+            
+            EmailConfirmationController::create($user->id, $uri);
+
+            Queue::push(new SendMailJob('REGISTRATION_CONFORMATION', [
+                'email' => $user->email,
+                'name' => $user->name,
+                'uri' => '/api/email/confirmation/'.$uri
+            ]));
             
             return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
 
@@ -45,11 +60,14 @@ class AuthController extends Controller {
         ]);
 
         $credentials = $request->only(['email', 'password']);
-
+        
         if (!$token = Auth::attempt($credentials)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
+        
+        if(!Auth::user()->confirmed)
+            return response()->json(['message' => 'Confirm your email, please.'], 401);
+        
         return $this->respondWithToken($token);
     }
 

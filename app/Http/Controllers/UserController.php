@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\RegistrationConfirmation;
 use Illuminate\Support\Facades\Mail;
-use App\Models\User;
 use App\Http\Controllers\MailController;
+use App\Models\User;
+use App\Jobs\SendMailJob;
+use Illuminate\Support\Facades\Queue;
 
 class UserController extends Controller{
     public function __construct(){
@@ -35,6 +37,11 @@ class UserController extends Controller{
     }
 
     public function sendMail(){
-        MailController::sendEmail('REGISTRATION_CONFORMATION', ['email'=>'limitpoint73@gmail.com', 'name'=>'drinkoron']);
+        Queue::push(new SendMailJob($template = 'REGISTRATION_CONFORMATION', [
+            'email' => 'capslk43@gmail.com',
+            'name' => 'Name',
+            'uri' => '43r34t45dfg'
+        ]));
+        return response()->json("Error", 404);
     }
 }

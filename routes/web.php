@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmailConfirmationController;
 use App\Mail\RegistrationConfirmation;
 use App\Http\Controllers\MailController;
 
@@ -11,6 +12,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('users/{id}', 'UserController@singleUser');
     $router->get('users', 'UserController@allUsers');
     $router->get('sendMail', 'Usercontroller@sendMail');
+    $router->get('email/confirmation/{c_uri}', 'EmailConfirmationController@confirm');
 });
 
 $router->group(['prefix' => 'email'], function () use ($router) {

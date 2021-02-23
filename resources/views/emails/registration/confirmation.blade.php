@@ -8,7 +8,7 @@ and complete your registration.
 <br>
 <br>
 
-@component('mail::button', ['url' => isset($url) ? $url : '#', 'color'=>'green'])
+@component('mail::button', ['url' => isset($uri) ? env('APP_URL').$uri : '#', 'color'=>'green'])
 Activate Account
 @endcomponent
 

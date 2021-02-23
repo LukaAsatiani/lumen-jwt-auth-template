@@ -11,6 +11,7 @@ class CreateUsersTable extends Migration{
             $table->string('name')->unique();
             $table->string('email')->unique()->notNullable();
             $table->string('password');
+            $table->boolean('confirmed');
             $table->timestamps();
         });
     }

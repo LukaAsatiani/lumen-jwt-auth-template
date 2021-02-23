@@ -1,6 +1,6 @@
 <?
     //{!!isset($name) ? $name : '<i style="color:crimson"><--Null--></i>'!!}
-
+    //isset($uri) ? env('APP_URL').'/email/confirmation'.$uri
     /*
     @component('mail::message')
 

@@ -20,6 +20,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
         'password',
     ];
 
+    protected $attributes = [
+        'confirmed' => false
+    ];
+
     public function getJWTIdentifier(){
         return $this->getKey();
     }
