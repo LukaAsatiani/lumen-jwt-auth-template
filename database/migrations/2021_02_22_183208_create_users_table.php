@@ -8,7 +8,7 @@ class CreateUsersTable extends Migration{
     public function up(){
         Schema::create('users', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name')->unique();
+            $table->string('username')->unique();
             $table->string('email')->unique()->notNullable();
             $table->string('password');
             $table->boolean('confirmed');

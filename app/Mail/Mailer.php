@@ -3,23 +3,23 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class RegistrationConfirmation extends Mailable {
+class Mailer extends Mailable {
     use Queueable, SerializesModels;
 
-    public function __construct($data){
+    public function __construct($template_data, $data){
+        $this->template_data = $template_data;
         $this->data = $data;
-        $this->subject = 'Please Confirm Your E-mail Address!';
     }
 
     public function build(){
+        // dd($this->template_data);
         return $this->
             from(env('MAIL_USERNAME', 'chessoutapp@gmail.com'), env('APP_NAME', 'ChessoutApp'))->
-            subject($this->subject)->
-            markdown('emails.registration.confirmation')->
+            subject($this->template_data['subject'])->
+            markdown($this->template_data['markdown'])->
             with($this->data);
     }
 }

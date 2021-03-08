@@ -3,7 +3,6 @@
 return [
     'default' => 'database',
     'connections' => [
-
         'sync' => [
             'driver' => 'sync',
         ],

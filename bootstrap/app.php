@@ -26,6 +26,8 @@ $app->singleton(
 );
 
 $app->configure('app');
+$app->configure('localization');
+$app->configure('auth');
 $app->configure('mail');
 $app->configure('queue');
 
@@ -35,12 +37,15 @@ $app->alias('mailer', Illuminate\Mail\Mailer::class);
 $app->alias('mailer', Illuminate\Contracts\Mail\Mailer::class);
 $app->alias('mailer', Illuminate\Contracts\Mail\MailQueue::class);
 
-// $app->middleware([
-//     App\Http\Middleware\ExampleMiddleware::class
-// ]);
+$app->middleware([
+    App\Http\Middleware\DBMiddleware::class,
+    App\Http\Middleware\LocalizationMiddleware::class,
+    // App\Http\Middleware\ResponseMiddleware::class,
+]);
 
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
+    'roles' => App\Http\Middleware\RolesMiddleware::class,
 ]);
 
 $app->register(App\Providers\AppServiceProvider::class);

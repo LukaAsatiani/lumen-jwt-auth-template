@@ -10,8 +10,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Jobs\SendMailJob;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
-use App\Http\Controllers\EmailConfirmationController;
-use App\Http\Controllers\UserController;
+use App\Models\EmailConfirmation;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller implements ShouldQueue{
     protected $jwt;
@@ -21,62 +21,72 @@ class AuthController extends Controller implements ShouldQueue{
     }
 
     public function register(Request $request){
-        $this->validate($request, [
-            'name' => 'required|string|min:8|max:64|unique:users',
-            'email' => 'required|email|min:8|max:64|unique:users',
+        $validator = Validator::make($request->all(), [
+            'username' => 'required|min:8|max:64|regex:/(^([a-zA-Z0-9]+)$)/u|unique:users',
+            'email' => 'required|email|unique:users',
             'password' => 'required|confirmed|min:8|max:64',
         ]);
 
+        if ($validator->fails()) {
+            return $this->respondWithValidationError($validator->errors()->messages(), 422);
+        }
+
         try {
             $user = new User;
-            $user->name = $request->input('name');
+            $user->username = $request->input('username');
             $user->email = $request->input('email');
             $plainPassword = $request->input('password');
             $user->password = app('hash')->make($plainPassword);
-            
             $user->save();
 
-            $uri = Str::random(21);
-            
-            EmailConfirmationController::create($user->id, $uri);
+            $user->setRole('user');
 
+            $uri = unique_random('email_confirmations', 'confirmation_uri');
+
+            $confirmation = new EmailConfirmation();
+            $confirmation->confirmation_uri = $uri;
+            $user->emailConfirmation()->save($confirmation);
+            
             Queue::push(new SendMailJob('REGISTRATION_CONFORMATION', [
                 'email' => $user->email,
-                'name' => $user->name,
+                'username' => $user->username,
                 'uri' => '/api/email/confirmation/'.$uri
             ]));
             
-            return response()->json(['user' => $user, 'message' => 'CREATED'], 201);
-
+            return $this->respond($user, 'message.user.created', 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'User Registration Failed!'], 409);
+            return $this->respondWithError('error.reg', 409);
         }
     }
 
     public function login(Request $request){
-        $this->validate($request, [
-            'email' => 'required|string',
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithValidationError($validator->errors()->messages(), 422);
+        }
 
         $credentials = $request->only(['email', 'password']);
         
         if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return $this->respondWithError('error.login', 401);
         }
         
         if(!Auth::user()->confirmed)
-            return response()->json(['message' => 'Confirm your email, please.'], 401);
+            return $this->respondWithError('error.user.confirmed', 401);
         
-        return $this->respondWithToken($token);
+        return $this->respondWithToken($token, 'message.user.login');
     }
 
     public function logout(Request $request){
         if(Auth::check()){
             Auth::logout();
-            return response()->json(['message'=> 'User successfully signed out'], 200);
+            return $this->respondWithMessage('message.user.logout');
         } 
         
-        return response()->json(['message' => 'Unauthorized'], 401);
+        return $this->respondWithError('error.unauthorized', 401);
     }
 }

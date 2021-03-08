@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class RegistrationConfirmation extends Mailable {
+class PasswordRecovery extends Mailable {
     use Queueable, SerializesModels;
 
     public function __construct($data){
@@ -17,9 +17,9 @@ class RegistrationConfirmation extends Mailable {
 
     public function build(){
         return $this->
-            from(env('MAIL_USERNAME', 'chessoutapp@gmail.com'), env('APP_NAME', 'ChessoutApp'))->
-            subject($this->subject)->
-            markdown('emails.registration.confirmation')->
-            with($this->data);
+        from(env('MAIL_USERNAME', 'chessoutapp@gmail.com'), env('APP_NAME', 'ChessoutApp'))->
+        subject($this->subject)->
+        markdown('emails.registration.confirmation')->
+        with($this->data);
     }
 }

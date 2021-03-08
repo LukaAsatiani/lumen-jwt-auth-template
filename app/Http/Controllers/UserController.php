@@ -3,45 +3,73 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
-use App\Mail\RegistrationConfirmation;
-use Illuminate\Support\Facades\Mail;
-use App\Http\Controllers\MailController;
 use App\Models\User;
+use App\Models\UserHasRole;
+use App\Models\Role;
+use Illuminate\Support\Facades\Validator;
 use App\Jobs\SendMailJob;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 
 class UserController extends Controller{
-    public function __construct(){
-        $this->middleware('auth', ['except' =>
-            [
-                'sendMail'
-            ]
-        ]);
-    }
-
     public function profile(){
-        return response()->json(['user' => Auth::user()], 200);
+        return $this->respond(Auth::user());
     }
 
     public function allUsers(){
-        return response()->json(['users' =>  User::all()], 200);
+        $users = User::all();
+        if(sizeof($users))
+            return $this->respond(User::all());
     }
 
     public function singleUser($id){
         try {
             $user = User::findOrFail($id);
-            return response()->json(['user' => $user], 200);
+            return $this->respond($user);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'user not found!'], 404);
+            return $this->respondWithError('error.user.find', 404);
+        }
+    }
+
+    public function changeProfileData(Request $request){
+        $validator = Validator::make($request->all(), [
+            'username' => 'min:8|max:64|regex:/(^([a-zA-Z0-9]+)$)/u|unique:users',
+            'email' => 'email|unique:users',
+            'password' => 'confirmed|min:8|max:64',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->respondWithValidationError($validator->errors()->messages(), 422);
+        }
+
+        $credentials = $request->only(['password', 'username', 'email']);
+        
+        $user = User::find(Auth::user()->id);
+
+        if($user){
+            foreach($credentials as $key => $value){
+                if($value === '')
+                    continue;
+
+                if($key === 'password')
+                    $value = app('hash')->make($value);
+                
+                $user[$key] = $value;
+            }
+            $user->save();
+            
+            return $this->respondWithMessage('message.user.updated');
+        } else {
+            return $this->respondWithError('error.user.update', 404);
         }
     }
 
     public function sendMail(){
-        Queue::push(new SendMailJob($template = 'REGISTRATION_CONFORMATION', [
+        Queue::push(new SendMailJob('REGISTRATION_CONFORMATION', [
             'email' => 'capslk43@gmail.com',
-            'name' => 'Name',
+            'username' => 'Username',
             'uri' => '43r34t45dfg'
         ]));
-        return response()->json("Error", 404);
     }
 }

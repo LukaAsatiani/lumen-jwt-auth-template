@@ -13,7 +13,8 @@ class SendMailJob extends Job{
     }
 
     public function handle(){
-        MailController::sendEmail($this->template, $this->data);
+        $mailer = new MailController();
+        $mailer->sendEmail($this->template, $this->data);
     }
 
     public function failed(){
